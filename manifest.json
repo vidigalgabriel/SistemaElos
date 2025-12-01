@@ -3,7 +3,7 @@
   "short_name": "Elos App",
   "description": "Seu sistema de tutores e famílias",
   "start_url": "/familias/dashboard",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#ffffff",
   "theme_color": "#2c5282",
   "icons": [
