@@ -1,12 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const tutorsController = require('../controllers/TutorController');
+const tutorsController = require('../controllers/tutorController'); 
 const { isLoggedIn } = require('../middleware/authMiddleware');
 
 router.use(isLoggedIn);
 
 router.get('/dashboard', tutorsController.dashboard);
-
 router.get('/atribuicoes', tutorsController.atribuicoes);
 
 router.get('/mensagens', tutorsController.mensagens);
