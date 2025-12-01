@@ -20,9 +20,9 @@ const occurrenceRoutes = require('./routes/occurrences');
 const logRoutes = require('./routes/logs');
 const profileRoutes = require('./routes/profiles');
 
-const dbUrl = process.env.DB_URL || 'mongodb://127.0.0.1:27017/elos';
-
+const dbUrl = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/elos';
 mongoose.connect(dbUrl);
+
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'Erro de conexão:'));
 db.once('open', () => console.log('Banco de dados conectado.'));
@@ -82,18 +82,3 @@ app.use((err, req, res, next) => {
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Servidor rodando na porta ${port}`));
-
-// Verifica se o navegador suporta Service Workers
-if ('serviceWorker' in navigator) {
-  // O Service Worker deve ser registrado apenas após o carregamento completo da página
-  window.addEventListener('load', () => {
-    // Registra o sw.js (que você colocou na pasta public)
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        // Registro bem-sucedido
-      })
-      .catch(err => {
-        // Falha no registro
-      });
-  });
-}
