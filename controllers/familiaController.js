@@ -89,10 +89,19 @@ FamiliaController.registros = async (req, res) => {
 FamiliaController.acompanharTrajeto = async (req, res) => {
   try {
     const child = await Child.findOne({ guardian: req.user._id });
-    const locations = child && child.tracking && child.location
-      ? [{ latitude: child.location.latitude, longitude: child.location.longitude }]
+    
+    
+    const isTracking = child && child.tracking;
+    const locationData = child && child.location && child.location.latitude 
+      ? [{ latitude: child.location.latitude, longitude: child.location.longitude }] 
       : [];
-    res.render('familias/trajeto', { user: req.user, locations });
+
+    res.render('familias/trajeto', { 
+      user: req.user, 
+      locations: locationData,
+      tracking: isTracking, 
+      tutorId: child?.assignedTutor || null
+    });
   } catch (err) {
     console.error(err);
     req.flash('error', 'Erro ao carregar trajeto');
@@ -154,11 +163,16 @@ FamiliaController.getTutorLocation = async (req, res) => {
     }
 
     if (child.tracking && child.location && child.location.latitude) {
-      return res.json(child.location);
+      return res.json({ 
+        status: 'tracking', 
+        latitude: child.location.latitude, 
+        longitude: child.location.longitude 
+      });
     } else {
       return res.json({ status: 'offline' });
     }
   } catch (err) {
+    console.error(err);
     res.json({ status: 'error' });
   }
 };

@@ -8,6 +8,11 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
   
   <style>
+    #map {
+        height: 400px;
+        width: 100%;
+        margin-bottom: 15px;
+    }
     h1 {
       text-align: center;
     }
@@ -21,9 +26,14 @@
 <main class="container">
   <div class="card">
     <h1>Acompanhar Trajeto</h1>
-
-    <div id="map"></div>
-    <p id="map-status" class="status-text"></p>
+    
+    <div 
+        id="map"
+        data-locations='<%- JSON.stringify(locations || []) %>'
+        data-tracking="<%= tracking %>">
+    </div>
+    
+    <p id="map-status" class="status-text">Carregando...</p>
 
     <div class="form-actions">
       <a href="/familias/dashboard" class="btn btn-secondary">
@@ -38,43 +48,89 @@
   const mapDiv = document.getElementById('map');
   const statusText = document.getElementById('map-status');
   
-  const map = L.map('map').setView([0, 0], 13);
+  const map = L.map('map');
   let tutorMarker = null;
+  const initialZoom = 13;
+  let hasSetInitialView = false;
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
+
+  function updateMarker(lat, lng) {
+    const latLng = [lat, lng];
+
+    if (!tutorMarker) {
+      tutorMarker = L.marker(latLng).addTo(map).bindPopup("Localização atual do Tutor").openPopup();
+    } else {
+      tutorMarker.setLatLng(latLng);
+    }
+    
+    if (!hasSetInitialView) {
+        map.setView(latLng, 16);
+        hasSetInitialView = true;
+    } else {
+        map.panTo(latLng);
+    }
+  }
+
+  function clearMarker() {
+    if (tutorMarker) {
+      map.removeLayer(tutorMarker);
+      tutorMarker = null;
+      hasSetInitialView = false;
+    }
+  }
 
   async function fetchTutorLocation() {
     try {
       const response = await fetch('/familias/api/tutor-location');
       const data = await response.json();
 
-      if (data.latitude && data.longitude) {
-        statusText.textContent = 'Tutor online.';
-        const latLng = [data.latitude, data.longitude];
-
-        if (!tutorMarker) {
-          tutorMarker = L.marker(latLng).addTo(map);
-          map.setView(latLng, 16);
-        } else {
-          tutorMarker.setLatLng(latLng);
-          map.panTo(latLng);
-        }
+      if (data.status === 'tracking') {
+        statusText.textContent = 'Tutor em rastreio (Tempo real).';
+        updateMarker(data.latitude, data.longitude);
+      } else if (data.status === 'offline') {
+        statusText.textContent = 'Tutor offline ou rastreio pausado.';
+        clearMarker();
+      } else if (data.status === 'no-child') {
+        statusText.textContent = 'Nenhum tutor atribuído ou criança encontrada.';
+        clearMarker();
       } else {
         statusText.textContent = 'Aguardando o tutor iniciar o rastreio...';
-        if (tutorMarker) {
-          map.removeLayer(tutorMarker);
-          tutorMarker = null;
-        }
+        clearMarker();
       }
+
     } catch (err) {
-      statusText.textContent = 'Erro ao buscar localização.';
+      statusText.textContent = 'Erro de conexão com o servidor.';
     }
   }
 
-  fetchTutorLocation();
-  setInterval(fetchTutorLocation, 10000);
+  function initializeMap() {
+    const locationsData = mapDiv.dataset.locations;
+    const locations = JSON.parse(locationsData || '[]');
+    const isTracking = mapDiv.dataset.tracking === 'true';
+
+    if (locations.length > 0) {
+      updateMarker(locations[0].latitude, locations[0].longitude);
+      map.setView([locations[0].latitude, locations[0].longitude], 16);
+    } else if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => map.setView([pos.coords.latitude, pos.coords.longitude], 13),
+        () => map.setView([-15.7797, -47.9297], 4)
+      );
+    } else {
+      map.setView([0, 0], 2);
+    }
+    
+    if (isTracking || locations.length === 0) {
+        fetchTutorLocation();
+    }
+
+    setInterval(fetchTutorLocation, 5000);
+  }
+
+  document.addEventListener('DOMContentLoaded', initializeMap);
 </script>
 
 <%- include('../partials/footer') %>
