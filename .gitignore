@@ -1,1 +1,9 @@
+# Ignorar arquivos de ambiente de desenvolvimento
 .env
+
+# Ignorar logs e arquivos temporários, se houver
+npm-debug.log
+yarn-error.log
+/node_modules
+/dist
+/build
