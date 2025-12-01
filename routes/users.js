@@ -6,11 +6,9 @@ const Child = require('../models/Child');
 const Record = require('../models/Record');
 const Location = require('../models/Location');
 
-
 router.get('/register', (req, res) => {
     res.render('users/register');
 });
-
 
 router.post('/register', async (req, res, next) => {
     try {
@@ -76,11 +74,9 @@ router.post('/register', async (req, res, next) => {
     }
 });
 
-
 router.get('/login', (req, res) => {
     res.render('users/login');
 });
-
 
 router.post('/login', passport.authenticate('local', {
     failureRedirect: '/users/login',
@@ -97,116 +93,12 @@ router.post('/login', passport.authenticate('local', {
     }
 });
 
-
-
-router.get('/dashboard', async (req, res) => {
-    try {
-        const user = req.user;
-        const child = await Child.findOne({ guardian: user._id }).populate('assignedTutor');
-        res.render('familias/dashboard', { user, child });
-    } catch (err) {
-        console.error(err);
-        req.flash('error', 'Erro ao carregar dashboard');
-        res.redirect('/');
-    }
+router.delete('/logout', (req, res, next) => {
+    req.logout(function(err) {
+        if (err) { return next(err); }
+        req.flash('success', 'Deslogado com sucesso');
+        res.redirect('/users/login');
+    });
 });
-
-
-router.get('/atribuicoes', async (req, res) => {
-    try {
-        const user = req.user;
-        const tutors = await User.find({ role: 'tutor' });
-        res.render('familias/buscarTutor', { user, tutors });
-    } catch (err) {
-        console.error(err);
-        req.flash('error', 'Erro ao carregar tutores');
-        res.redirect('/users/dashboard');
-    }
-});
-
-
-router.post('/selecionarTutor', async (req, res) => {
-    try {
-        const { tutorId } = req.body;
-        const user = req.user;
-        const tutor = await User.findById(tutorId);
-        if (!tutor || tutor.role !== 'tutor') {
-            req.flash('error', 'Tutor inválido');
-            return res.redirect('/users/atribuicoes');
-        }
-        user.selectedTutor = tutor._id;
-        await user.save();
-        const child = await Child.findOne({ guardian: user._id });
-        if (child) {
-            child.assignedTutor = tutor._id;
-            await child.save();
-        }
-        req.flash('success', 'Tutor selecionado com sucesso');
-        res.redirect('/users/dashboard');
-    } catch (err) {
-        console.error(err);
-        req.flash('error', 'Erro ao selecionar tutor');
-        res.redirect('/users/atribuicoes');
-    }
-});
-
-
-router.get('/registros', async (req, res) => {
-    try {
-        const user = req.user;
-        const child = await Child.findOne({ guardian: user._id });
-        const records = child
-            ? await Record.find({ childId: child._id }).sort({ createdAt: -1 })
-            : [];
-        res.render('familias/registros', { user, child, records });
-    } catch (err) {
-        console.error(err);
-        req.flash('error', 'Erro ao carregar registros');
-        res.redirect('/users/dashboard');
-    }
-});
-
-
-router.post('/registros', async (req, res) => {
-    try {
-        const { type, descricao } = req.body;
-        const user = req.user;
-        const child = await Child.findOne({ guardian: user._id });
-        if (!child) {
-            req.flash('error', 'Nenhuma criança encontrada');
-            return res.redirect('/users/registros');
-        }
-        await Record.create({
-            childId: child._id,
-            tutorId: child.assignedTutor,
-            type,
-            descricao,
-            data: new Date()
-        });
-        req.flash('success', 'Registro adicionado');
-        res.redirect('/users/registros');
-    } catch (err) {
-        console.error(err);
-        req.flash('error', 'Erro ao adicionar registro');
-        res.redirect('/users/registros');
-    }
-});
-
-
-router.get('/mapaRotas', async (req, res) => {
-    try {
-        const user = req.user;
-        const child = await Child.findOne({ guardian: user._id }).populate('assignedTutor');
-        const locations = child
-            ? await Location.find({ childId: child._id }).sort({ createdAt: 1 })
-            : [];
-        res.render('familias/trajeto', { user, child, locations });
-    } catch (err) {
-        console.error(err);
-        req.flash('error', 'Erro ao carregar mapa de trajetos');
-        res.redirect('/users/dashboard');
-    }
-});
-
 
 module.exports = router;
