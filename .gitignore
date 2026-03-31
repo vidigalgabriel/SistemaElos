@@ -7,3 +7,60 @@ yarn-error.log
 /node_modules
 /dist
 /build
+
+# =========================
+# Arquivos sensíveis
+# =========================
+.env
+.env.*
+*.key
+*.pem
+
+# =========================
+# Dependências
+# =========================
+node_modules/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# =========================
+# Build / arquivos gerados
+# =========================
+dist/
+build/
+.next/
+out/
+coverage/
+
+# =========================
+# IDEs / editores
+# =========================
+.vscode/
+.idea/
+*.iml
+
+# =========================
+# Sistema operacional
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Logs e temporários
+# =========================
+*.log
+logs/
+tmp/
+.cache/
+*.tmp
+
+# =========================
+# Outros comuns
+# =========================
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
